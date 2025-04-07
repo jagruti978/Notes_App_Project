@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Add Note</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div class="container">
+        <h2>Add Note</h2>
+        <form id="addNoteForm">
+            <input type="text" id="title" placeholder="Enter Title" required>
+            <textarea id="content" placeholder="Enter Note Content" required></textarea>
+            <input type="text" id="category" placeholder="Enter Category" required>
+            <button type="submit">Add Note</button>
+        </form>
+        <a href="adminDashboard.html" class="back-btn">Back to Dashboard</a>
+    </div>
+
+    <script>
+        document.getElementById("addNoteForm").addEventListener("submit", async function(event) {
+            event.preventDefault();
+            const title = document.getElementById("title").value.trim();
+            const content = document.getElementById("content").value.trim();
+            const category = document.getElementById("category").value.trim();
+
+            const response = await fetch("http://localhost:5000/notes", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ title, content, category })
+            });
+
+            const data = await response.json();
+            alert(data.message);
+            if (response.ok) window.location.href = "adminDashboard.html";
+        });
+    </script>
+</body>
+</html>

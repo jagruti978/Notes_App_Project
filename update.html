@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Update Note</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div class="container">
+        <h2>Update Note</h2>
+        <form id="updateNoteForm">
+            <input type="hidden" id="noteId">
+            <input type="text" id="title" placeholder="Enter Title" required>
+            <textarea id="content" placeholder="Enter Note Content" required></textarea>
+            <button type="submit">Update Note</button>
+        </form>
+        <a href="adminDashboard.html" class="back-btn">Back to Dashboard</a>
+    </div>
+
+    <script>
+        const params = new URLSearchParams(window.location.search);
+        const noteId = params.get("id");
+
+        async function fetchNoteDetails() {
+            const response = await fetch(`http://localhost:5000/notes/${noteId}`);
+            const note = await response.json();
+            document.getElementById("noteId").value = note.id;
+            document.getElementById("title").value = note.title;
+            document.getElementById("content").value = note.content;
+        }
+
+        document.getElementById("updateNoteForm").addEventListener("submit", async function(event) {
+            event.preventDefault();
+            const title = document.getElementById("title").value.trim();
+            const content = document.getElementById("content").value.trim();
+
+            const response = await fetch(`http://localhost:5000/notes/${noteId}`, {
+                method: "PUT",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ title, content })
+            });
+
+            const data = await response.json();
+            alert(data.message);
+            if (response.ok) window.location.href = "adminDashboard.html";
+        });
+
+        fetchNoteDetails();
+    </script>
+</body>
+</html>

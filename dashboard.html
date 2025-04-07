@@ -1,0 +1,203 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Notes Dashboard</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #FFF9C4;
+            color: #5D3754;
+            margin: 0;
+            padding: 0;
+            text-align: center;
+        }
+
+        /* Navigation Bar */
+        .navbar {
+            background-color: #5D3754;
+            color: white;
+            padding: 15px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .logo {
+            font-size: 24px;
+            font-weight: bold;
+        }
+
+        .logout-btn {
+            background-color: white;
+            color: #5D3754;
+            padding: 8px 15px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+
+        .logout-btn:hover {
+            background-color: #e0e0e0;
+        }
+
+        /* Container */
+        .container {
+            margin: 20px auto;
+            max-width: 600px;
+        }
+
+        /* Search Input */
+        input[type="text"] {
+            width: 80%;
+            padding: 10px;
+            margin-bottom: 10px;
+            border: 1px solid #5D3754;
+            border-radius: 5px;
+        }
+
+        /* Search Button */
+        .search-btn {
+            background-color: #5D3754;
+            color: white;
+            border: none;
+            padding: 10px;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+
+        .search-btn:hover {
+            background-color: #3e2438;
+        }
+
+        /* Notes */
+        .note {
+            background-color: white;
+            padding: 15px;
+            border-radius: 5px;
+            box-shadow: 0px 0px 10px rgba(0, 0, 0, 0.1);
+            margin-bottom: 15px;
+            text-align: left;
+        }
+
+        .note h3 {
+            margin: 0;
+            color: #5D3754;
+        }
+
+        .note p {
+            font-size: 14px;
+        }
+
+        .download-btn {
+            background-color: #5D3754;
+            color: white;
+            border: none;
+            padding: 8px;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+
+        .download-btn:hover {
+            background-color: #3e2438;
+        }
+
+        .no-notes {
+            font-weight: bold;
+            color: #5D3754;
+        }
+    </style>
+</head>
+<body>
+    <nav class="navbar">
+        <div class="logo">📓 Notes App</div>
+        <button class="logout-btn" onclick="logout()">Logout</button>
+    </nav>
+
+    <div class="container">
+        <h2>Welcome to Your Notes</h2>
+
+        <input type="text" id="searchInput" placeholder="Search notes..." onkeyup="searchNotes()">
+        <button class="search-btn" id="searchButton">Search</button>
+
+        <div id="notesContainer"></div>
+    </div>
+
+    <script>
+        // Fetch and display all notes
+        async function fetchNotes() {
+            try {
+                const response = await fetch("http://localhost:5000/notes");
+                const notes = await response.json();
+                displayNotes(notes);
+            } catch (error) {
+                console.error("Error fetching notes:", error);
+            }
+        }
+
+        // Display notes dynamically
+        function displayNotes(notes) {
+            const container = document.getElementById("notesContainer");
+            container.innerHTML = "";
+
+            if (notes.length === 0) {
+                container.innerHTML = "<p class='no-notes'>No notes found.</p>";
+                return;
+            }
+
+            notes.forEach(note => {
+                const noteElement = document.createElement("div");
+                noteElement.classList.add("note");
+
+                noteElement.innerHTML = `
+                    <h3>${note.title}</h3>
+                    <p>${note.content.substring(0, 100)}...</p>
+                    <button class="download-btn" onclick="downloadNote(${note.id})">Download PDF</button>
+                `;
+                container.appendChild(noteElement);
+            });
+        }
+
+        // Search Notes Function
+        async function searchNotes() {
+            const searchInput = document.getElementById("searchInput").value.trim();
+
+            if (searchInput === "") {
+                fetchNotes(); // Show all notes if search is empty
+                return;
+            }
+
+            try {
+                const response = await fetch(`http://localhost:5000/notes/search?query=${encodeURIComponent(searchInput)}`);
+                const data = await response.json();
+
+                if (response.ok) {
+                    displayNotes(data);
+                } else {
+                    document.getElementById("notesContainer").innerHTML = "<p class='no-notes'>No notes found.</p>";
+                }
+            } catch (error) {
+                console.error("Search error:", error);
+                alert("Something went wrong. Please try again.");
+            }
+        }
+
+        // Download note as PDF
+        function downloadNote(id) {
+            window.location.href = `http://localhost:5000/notes/export/${id}`;
+        }
+
+        // Logout function
+        function logout() {
+            window.location.href = "index.html";
+        }
+
+        // Load all notes on page load
+        window.onload = fetchNotes;
+
+        // Ensure search works with button click too
+        document.getElementById("searchButton").addEventListener("click", searchNotes);
+    </script>
+</body>
+</html>

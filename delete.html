@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Delete Note</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div class="container">
+        <h2>Delete Note</h2>
+        <p id="noteMessage">Are you sure you want to delete this note?</p>
+        <button id="deleteBtn">Delete</button>
+        <a href="adminDashboard.html" class="back-btn">Cancel</a>
+    </div>
+
+    <script>
+        // ✅ Extract note ID from URL
+        const params = new URLSearchParams(window.location.search);
+        const noteId = params.get("id");
+
+        if (!noteId) {
+            document.getElementById("noteMessage").innerText = "Invalid note selected.";
+            document.getElementById("deleteBtn").style.display = "none";
+        }
+
+        document.getElementById("deleteBtn").addEventListener("click", async function () {
+            if (!noteId) {
+                alert("Error: Note ID is missing.");
+                return;
+            }
+
+            const confirmDelete = confirm("Are you sure you want to delete this note?");
+            if (!confirmDelete) return;
+
+            try {
+                const response = await fetch(`http://localhost:5000/notes/${noteId}`, { method: "DELETE" });
+                const data = await response.json();
+
+                if (response.ok) {
+                    alert("Note deleted successfully!");
+                    window.location.href = "adminDashboard.html"; // Redirect to dashboard
+                } else {
+                    alert("Error: " + (data.error || "Unknown error"));
+                }
+            } catch (error) {
+                alert("Something went wrong. Please try again.");
+                console.error("Delete Error:", error);
+            }
+        });
+    </script>
+</body>
+</html>

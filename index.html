@@ -1,0 +1,264 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Notes App</title>
+    <style>
+        
+        body {
+            font-family: 'Arial', sans-serif;
+            background-color: #FFFACD;
+            color: #5D3754;
+            margin: 0;
+            padding: 0;
+        }
+
+        
+        nav {
+            background-color: #5D3754;
+            color: white;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 15px 20px;
+        }
+
+        nav .logo {
+            font-size: 24px;
+            font-weight: bold;
+        }
+
+        nav ul {
+            list-style: none;
+            display: flex;
+            margin: 0;
+            padding: 0;
+        }
+
+        nav ul li {
+            margin-left: 20px;
+        }
+
+        nav ul li a {
+            color: white;
+            text-decoration: none;
+            font-size: 16px;
+            transition: 0.3s;
+        }
+
+        nav ul li a:hover {
+            text-decoration: underline;
+        }
+
+        /* Search Bar */
+        .search-container {
+            display: flex;
+            justify-content: center;
+            margin: 20px auto;
+        }
+
+        .search-container input {
+            width: 60%;
+            padding: 10px;
+            font-size: 16px;
+            border: 2px solid #5D3754;
+            border-radius: 5px;
+        }
+
+        .search-container button {
+            background-color: #5D3754;
+            color: white;
+            padding: 10px 15px;
+            border: none;
+            cursor: pointer;
+            margin-left: 10px;
+            border-radius: 5px;
+        }
+
+        .search-container button:hover {
+            background-color: #46283D;
+        }
+
+        /* Notes Section */
+        .notes-container {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 20px;
+            padding: 20px;
+        }
+
+        .note {
+            background-color: white;
+            padding: 15px;
+            border-radius: 8px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+            border-left: 5px solid #5D3754;
+        }
+
+        .note h3 {
+            margin: 0;
+            color: #5D3754;
+        }
+
+        .note p {
+            font-size: 14px;
+        }
+
+        .view-btn {
+            background-color: #5D3754;
+            color: white;
+            border: none;
+            padding: 8px 10px;
+            cursor: pointer;
+            border-radius: 5px;
+            display: block;
+            margin-top: 10px;
+        }
+
+        .view-btn:hover {
+            background-color: #46283D;
+        }
+
+        /* Pagination */
+        .pagination {
+            display: flex;
+            justify-content: center;
+            margin: 20px 0;
+        }
+
+        .pagination button {
+            background-color: #5D3754;
+            color: white;
+            padding: 8px 12px;
+            border: none;
+            margin: 5px;
+            cursor: pointer;
+            border-radius: 5px;
+        }
+
+        .pagination button:hover {
+            background-color: #46283D;
+        }
+
+        .pagination button:disabled {
+            background-color: #A79CA0;
+            cursor: not-allowed;
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Navigation Bar -->
+    <nav>
+        <div class="logo">📚 NotesApp</div>
+        <ul>
+            <li><a href="adminLogin.html">Admin Login</a></li>
+            <li><a href="login.html">Login</a></li>
+            <li><a href="signup.html">Signup</a></li>
+        </ul>
+    </nav>
+
+    <!-- Search Bar -->
+    <div class="search-container">
+        <input type="text" id="searchInput" placeholder="Search notes..." onkeyup="searchNotes()">
+        <button onclick="searchNotes()">🔍</button>
+    </div>
+
+    <!-- Notes Section -->
+    <div id="notesContainer" class="notes-container"></div>
+
+    <!-- Pagination -->
+    <div id="pagination" class="pagination"></div>
+
+    <script>
+        document.addEventListener("DOMContentLoaded", fetchNotes);
+
+        let currentPage = 1;
+        const notesPerPage = 5;
+
+        // Fetch Notes from Backend
+        async function fetchNotes() {
+            try {
+                const response = await fetch("http://localhost:5000/notes");
+                const notes = await response.json();
+                displayNotes(notes, currentPage);
+            } catch (error) {
+                console.error("Error fetching notes:", error);
+            }
+        }
+
+        // Display Notes with Pagination
+        function displayNotes(notes, page) {
+            const notesContainer = document.getElementById("notesContainer");
+            const pagination = document.getElementById("pagination");
+            notesContainer.innerHTML = "";
+
+            const startIndex = (page - 1) * notesPerPage;
+            const endIndex = startIndex + notesPerPage;
+            const paginatedNotes = notes.slice(startIndex, endIndex);
+
+            paginatedNotes.forEach(note => {
+                const noteDiv = document.createElement("div");
+                noteDiv.classList.add("note");
+                noteDiv.innerHTML = `
+                    <h3>${note.title}</h3>
+                    <p>${note.content.substring(0, 100)}...</p>
+                    <button class="view-btn" onclick="redirectToLogin()">View</button>
+                `;
+                notesContainer.appendChild(noteDiv);
+            });
+
+            pagination.innerHTML = "";
+            for (let i = 1; i <= Math.ceil(notes.length / notesPerPage); i++) {
+                const btn = document.createElement("button");
+                btn.innerText = i;
+                btn.onclick = () => { currentPage = i; displayNotes(notes, i); };
+                if (i === page) btn.style.backgroundColor = "#46283D";
+                pagination.appendChild(btn);
+            }
+        }
+
+      // Search Notes
+      async function searchNotes() {
+    const query = document.getElementById("searchInput").value.trim();
+
+    if (!query) {
+        fetchNotes(); // Reload all notes if search is empty
+        return;
+    }
+
+    console.log("Searching for:", query); // Debugging output
+
+    try {
+        const response = await fetch(`http://localhost:5000/notes/search?query=${encodeURIComponent(query)}`);
+
+        if (!response.ok) {
+            throw new Error("No notes found");
+        }
+
+        const searchResults = await response.json();
+        console.log("Search results:", searchResults); // Debugging output
+
+        if (Array.isArray(searchResults) && searchResults.length > 0) {
+            displayNotes(searchResults, 1);
+        } else {
+            document.getElementById("notesContainer").innerHTML = 
+                "<p style='text-align:center; color:#5D3754; font-weight:bold;'>No notes found</p>";
+            document.getElementById("pagination").innerHTML = "";
+        }
+    } catch (error) {
+        console.error("Error searching notes:", error);
+        document.getElementById("notesContainer").innerHTML = 
+            "<p style='text-align:center; color:#5D3754; font-weight:bold;'>No notes found</p>";
+        document.getElementById("pagination").innerHTML = "";
+    }
+}
+
+
+        function redirectToLogin() {
+            window.location.href = "login.html";
+        }
+    </script>
+</body>
+</html>
